@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jaxb:bindings xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.0">
+	<jaxb:bindings schemaLocation="datatypes.xsd">
+		<jaxb:bindings node="//xs:element[@name='TQ.1']">
+			<jaxb:factoryMethod name="DTTQ1" />
+		</jaxb:bindings>
+		<jaxb:bindings
+			node="//xs:element[@name='TQ.2']">
+			<jaxb:factoryMethod name="DTTQ2" />
+		</jaxb:bindings>
+	</jaxb:bindings>
+</jaxb:bindings>

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:Acks_Subflows_BuildAck.msgflow="Acks/Subflows/BuildAck.msgflow" xmlns:Acks_Subflows_BuildNack.msgflow="Acks/Subflows/BuildNack.msgflow" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ComIbmPassthru.msgnode="ComIbmPassthru.msgnode" xmlns:ComIbmTCPIPServerOutput.msgnode="ComIbmTCPIPServerOutput.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow"
+    xmlns:hl7dfdlin_HL7DFDLInput.msgflow="hl7dfdlin/HL7DFDLInput.msgflow" xmlns:mbmonitor="http://www.ibm.com/wbi/2008/eflow_mbmonitor" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="NLA_MTADM_ADT_Receiver.msgflow"
+    nsPrefix="NLA_MTADM_ADT_Receiver.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <translation xmi:type="utility:TranslatableString" key="NLA_MTADM_ADT_Receiver" bundleName="NLA_MTADM_ADT_Receiver" pluginId="NLA_MTADM_ADT_Receiver"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/NLA_MTADM_ADT_Receiver/icons/full/obj16/NLA_MTADM_ADT_Receiver.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/NLA_MTADM_ADT_Receiver/icons/full/obj30/NLA_MTADM_ADT_Receiver.gif"/>
+    <composition>
+      <nodes xmi:type="hl7dfdlin_HL7DFDLInput.msgflow:FCMComposite_1" xmi:id="FCMComposite_1_1" location="41,173" CheckDuplicates="false" ReportDuplicates="false" timeoutWaitingForData="600">
+        <translation xmi:type="utility:ConstantString" string="NLA_MTADM_ADT_Receiver_IN"/>
+      </nodes>
+      <nodes xmi:type="Acks_Subflows_BuildAck.msgflow:FCMComposite_1" xmi:id="FCMComposite_1_2" location="559,272">
+        <translation xmi:type="utility:ConstantString" string="BuildAck"/>
+      </nodes>
+      <nodes xmi:type="Acks_Subflows_BuildNack.msgflow:FCMComposite_1" xmi:id="FCMComposite_1_3" location="543,98">
+        <translation xmi:type="utility:ConstantString" string="BuildNack"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="358,244" queueName="NLA.MTADM.ADT.RECV.QA">
+        <translation xmi:type="utility:ConstantString" string="NLA.MTADM.ADT.QA"/>
+      </nodes>
+      <nodes xmi:type="ComIbmTCPIPServerOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="697,188" connectionDetails="1111" timeoutSendingData="10" customDelimiter="1C0D">
+        <translation xmi:type="utility:ConstantString" string="NLA_MTADM_ADT_Receiver_REPLY"/>
+      </nodes>
+      <nodes xmi:type="ComIbmPassthru.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_8" location="887,188">
+        <translation xmi:type="utility:ConstantString" string="End"/>
+        <monitorEvents eventSourceDescription="In terminal" eventSourceName="End.terminal.in" eventIdentity="Transaction End">
+          <eventXMLDoc xmi:type="mbmonitor:MonitorEvent">
+            <globalTransactionCorrelator/>
+            <parentTransactionCorrelator/>
+            <localTransactionCorrelator dataLocation="$Environment/MsgID" eventCorrelation="dataLocation"/>
+            <bitStreamData encoding="base64Binary"/>
+            <eventName literal="Transaction End"/>
+            <eventFilter dataLocation="true()" isXPath="true"/>
+          </eventXMLDoc>
+        </monitorEvents>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_10" location="257,242" computeExpression="esql://routine/#NLA_MTADM_ADT_Receiver.Main" computeMode="all">
+        <translation xmi:type="utility:ConstantString" string="CreateUUID_ACK"/>
+        <nsMappingTable nsPrefix="HL7" namespace="urn:hl7-org:v2xml"/>
+        <monitorEvents eventSourceDescription="Out terminal" eventSourceName="CreateUUID_ACK.terminal.out" eventIdentity="Transaction Start">
+          <eventXMLDoc xmi:type="mbmonitor:MonitorEvent">
+            <applicationData dataLocation="$Root/DFDL/HL7:HL7/HL7:MSH/HL7:MSH.10.MessageControlID" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="HL7" nsURI="urn:hl7-org:v2xml"/>
+            </applicationData>
+            <applicationData dataLocation="$Root/DFDL/HL7:HL7//HL7:PID/HL7:PID.2.PatientID/HL7:CX.1" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="HL7" nsURI="urn:hl7-org:v2xml"/>
+            </applicationData>
+            <applicationData dataLocation="$Root/DFDL/HL7:HL7//HL7:PID/HL7:PID.3.PatientIdentifierList/HL7:CX.1" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="HL7" nsURI="urn:hl7-org:v2xml"/>
+            </applicationData>
+            <applicationData dataLocation="$Root/DFDL/HL7:HL7/HL7:MSH/HL7:MSH.3.SendingApplication/HL7:HD.1" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="HL7" nsURI="urn:hl7-org:v2xml"/>
+            </applicationData>
+            <applicationData dataLocation="$Root/DFDL/HL7:HL7/HL7:MSH/HL7:MSH.4.SendingFacility/HL7:HD.1" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="HL7" nsURI="urn:hl7-org:v2xml"/>
+            </applicationData>
+            <applicationData dataLocation="$Root/DFDL/HL7:HL7/HL7:MSH/HL7:MSH.5.ReceivingApplication/HL7:HD.1" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="HL7" nsURI="urn:hl7-org:v2xml"/>
+            </applicationData>
+            <applicationData dataLocation="$Root/DFDL/HL7:HL7/HL7:MSH/HL7:MSH.9.MessageType/HL7:MSG.1" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="HL7" nsURI="urn:hl7-org:v2xml"/>
+            </applicationData>
+            <applicationData dataLocation="$Root/DFDL/HL7:HL7/HL7:MSH/HL7:MSH.9.MessageType/HL7:MSG.2" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="HL7" nsURI="urn:hl7-org:v2xml"/>
+            </applicationData>
+            <applicationData dataLocation="$Environment/Variables/SourceHostname" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="HL7" nsURI="urn:hl7-org:v2xml"/>
+            </applicationData>
+            <applicationData dataLocation="$Environment/Variables/SourceAddress" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="HL7" nsURI="urn:hl7-org:v2xml"/>
+            </applicationData>
+            <applicationData dataLocation="$Root/DFDL/HL7:HL7//HL7:PID/HL7:PID.18.PatientAccountNumber/HL7:CX.1" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="HL7" nsURI="urn:hl7-org:v2xml"/>
+            </applicationData>
+            <applicationData dataLocation="$Root/DFDL/HL7:HL7//HL7:PID/HL7:PID.3.PatientIdentifierList" isXPath="true" complexData="true">
+              <nsPrefixMap prefix="HL7" nsURI="urn:hl7-org:v2xml"/>
+            </applicationData>
+            <globalTransactionCorrelator/>
+            <parentTransactionCorrelator/>
+            <localTransactionCorrelator dataLocation="$Root/MQRFH2/usr[1]/uniqueMessageId" eventCorrelation="dataLocation">
+              <nsPrefixMap prefix="HL7" nsURI="urn:hl7-org:v2xml"/>
+            </localTransactionCorrelator>
+            <bitStreamData encoding="base64Binary"/>
+            <eventName literal="Transaction Start"/>
+            <eventFilter dataLocation="true()" isXPath="true">
+              <nsPrefixMap prefix="HL7" nsURI="urn:hl7-org:v2xml"/>
+            </eventFilter>
+          </eventXMLDoc>
+        </monitorEvents>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_12" location="268,85" computeExpression="esql://routine/#NLA_MTADM_ADT_Receiver.Main" computeMode="all">
+        <translation xmi:type="utility:ConstantString" string="CreateUUID_NACK"/>
+        <monitorEvents eventSourceDescription="Out terminal" eventSourceName="CreateUUID_NACK.terminal.out" eventIdentity="Roll Back">
+          <eventXMLDoc xmi:type="mbmonitor:MonitorEvent">
+            <globalTransactionCorrelator/>
+            <parentTransactionCorrelator/>
+            <localTransactionCorrelator dataLocation="$Root/MQRFH2/usr[1]/uniqueMessageId" eventCorrelation="dataLocation"/>
+            <bitStreamData encoding="base64Binary"/>
+            <eventName literal="Roll Back"/>
+            <eventFilter dataLocation="true()" isXPath="true"/>
+          </eventXMLDoc>
+        </monitorEvents>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.Output" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.Output" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_11" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_12" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.Output1" targetTerminalName="InTerminal.close"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_17" targetNode="FCMComposite_1_10" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.Out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_18" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_10" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_19" targetNode="FCMComposite_1_12" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.Failure" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_20" targetNode="FCMComposite_1_12" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.Catch" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_21" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_12" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.Input"/>
+    </composition>
+    <propertyOrganizer/>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

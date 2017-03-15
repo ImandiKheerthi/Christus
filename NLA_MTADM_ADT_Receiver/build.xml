@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Test" default="deploy" basedir=".">
+	<property file="jenkins.properties"></property>
+	 <taskdef resource="net/sf/antcontrib/antlib.xml"/> 
+	 
+	 <!-- Making Windows command environment  -->
+	 <target name="mqsiprofile.cmd">
+	 <exec executable="${broker.mqsi.path}\mqsiprofile.cmd" />
+	 </target>
+	<!-- Creating a bar file -->
+		<target name="Create_bar">
+			<for list="${project_name}" delimiter="," param="pName">
+				<sequential>
+				<echo message="@{pName}"/>
+				<echo message="@{pName}\${flow_name}"/>
+				<exec executable="${toolkit.home}\mqsicreatebar.exe" spawn="false" vmlauncher="false" failonerror="true">
+					<!-- project's workspace-->
+					<arg value="-data" />
+					<arg value="${workspaces.dir}" />
+					<!--barfile generated path-->
+					<arg value="-b" />
+					<arg value="${bar.loc}\@{pName}.bar" />
+					<!--project Name-->
+					<arg value="-p" />
+					<arg value="@{pName}" />
+					<!--Message flows for its corresponding projects which has given in cvsCheckout.properties-->
+					<arg value="-o" />
+					<arg line="@{pName}\${flow_name}" />
+					<!--<arg line="@{pName}\IIB10_Autodeploy_Jenkins_Compute.esql" />
+				<arg value="-deployAsSource" />-->
+				</exec>	
+				</sequential>
+			</for>			
+		</target>
+		
+	<!-- deploying a bar file-->
+		<target name="deploy" depends="Create_bar">
+			<for list="${project_name}" delimiter="," param="pName">
+				<sequential>
+				<echo message="@{pName} ${batfile}\Shyam.bat ${broker.mqsi.path}\mqsiprofile.cmd ${broker.mqsi.path}\mqsideployscript.bat" />
+				<echo message="@{pName}"/>
+				<exec executable="${batfile}\Shyam.bat" vmlauncher="false">
+				<arg value="${broker.mqsi.path}\mqsiprofile.cmd"/>
+				<arg value="${broker.mqsi.path}\mqsideployscript.bat"/>
+			<!--	<exec executable="${broker.mqsi.path}\mqsideployscript.bat" spawn="false"  > -->
+					<arg value="${broker_name}" />
+					<arg value="-e" />
+					<arg value="${exegroup}" />
+					<arg value="-a" />
+					<arg value="${bar.loc}\@{pName}.bar" />
+				</exec>
+				</sequential>
+			</for>		
+		</target>
+		
+	</project>

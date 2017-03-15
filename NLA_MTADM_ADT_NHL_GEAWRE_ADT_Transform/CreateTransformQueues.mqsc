@@ -1,0 +1,10 @@
+******************************
+*
+* runmqsc TIIBMQ01 (or appropriate QueueManager) from IBM Intgration Console and copy and paste this script into it
+*
+* Type end to exit
+*
+******************************
+DEFINE QLOCAL('NHL.GEAWRE.ADT.QL') MAXDEPTH(999999999) BOTHRESH(999999999) REPLACE
+DEFINE QLOCAL('NLA.MTADM.ADT.NHL.GEAWRE.ADT.XFRM.QL') MAXDEPTH(999999999) BOTHRESH(999999999) REPLACE
+DEFINE SUB ('NLA.MTADM.ADT.NHL.GEAWRE.ADT.SL') DEST ('NLA.MTADM.ADT.NHL.GEAWRE.ADT.XFRM.QL') TOPICSTR('NLA.MTADM.ADT.RECV.TL') REPLACE

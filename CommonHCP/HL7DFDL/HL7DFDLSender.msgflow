@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmResetContentDescriptor.msgnode="ComIbmResetContentDescriptor.msgnode" xmlns:ComIbmTCPIPClientOutput.msgnode="ComIbmTCPIPClientOutput.msgnode" xmlns:ComIbmTCPIPClientReceive.msgnode="ComIbmTCPIPClientReceive.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="HL7DFDL/HL7DFDLSender.msgflow"
+    nsPrefix="HL7DFDL_HL7DFDLSender.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.Retries" name="Retries" lowerBound="1" defaultValueLiteral="1">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.Delay" name="Delay" lowerBound="1" defaultValueLiteral="10">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="HL7DFDLSender" bundleName="HL7DFDL/HL7DFDLSender" pluginId="CommonHCP"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/CommonHCP/icons/full/obj16/HL7DFDLSender.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/CommonHCP/icons/full/obj30/HL7DFDLSender.gif"/>
+    <composition>
+      <nodes xmi:type="eflow:FCMSource" xmi:id="InTerminal.Input" location="95,133">
+        <translation xmi:type="utility:TranslatableString" key="InTerminal.In" bundleName="HL7DFDL/HL7DFDLSender" pluginId="CommonHCP"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output2" location="600,219">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.Failure" bundleName="HL7DFDL/HL7DFDLSender" pluginId="CommonHCP"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output1" location="597,289">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.NACK" bundleName="HL7DFDL/HL7DFDLSender" pluginId="CommonHCP"/>
+      </nodes>
+      <nodes xmi:type="eflow:FCMSink" xmi:id="OutTerminal.Output" location="602,356">
+        <translation xmi:type="utility:TranslatableString" key="OutTerminal.ACK" bundleName="HL7DFDL/HL7DFDLSender" pluginId="CommonHCP"/>
+      </nodes>
+      <nodes xmi:type="ComIbmTCPIPClientOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="386,138" connectionDetails="localhost:2222" timeoutSendingData="10">
+        <translation xmi:type="utility:ConstantString" string="TCPIP Client Output"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="205,133" computeExpression="esql://routine/HL7DFDL#HL7DFDLSender.Main" computeMode="all">
+        <translation xmi:type="utility:ConstantString" string="AddMLLPCharacters"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="747,138" computeExpression="esql://routine/HL7DFDL#HL7DFDLSender_HandleReply.Main">
+        <translation xmi:type="utility:ConstantString" string="HandleReply"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="611,39" computeExpression="esql://routine/HL7DFDL#HL7DFDLSender_HandleException.Main">
+        <translation xmi:type="utility:ConstantString" string="HandleException"/>
+      </nodes>
+      <nodes xmi:type="ComIbmTCPIPClientReceive.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="608,138" connectionDetails="localhost:2222" timeoutWaitingForData="10" messageDomainProperty="BLOB" recordDetection="delimited" recordDelimiter="customDelimiter" customDelimiter="1C0D">
+        <translation xmi:type="utility:ConstantString" string="TCPIP Client Receive"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_6" location="518,138" computeExpression="esql://routine/HL7DFDL#HL7DFDLSender_PrepForReply.Main" computeMode="all">
+        <translation xmi:type="utility:ConstantString" string="PrepForReply"/>
+      </nodes>
+      <nodes xmi:type="ComIbmResetContentDescriptor.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_7" location="826,140" messageDomain="DFDL" resetMessageDomain="true" resetMessageSet="true" messageType="{urn:hl7-org:v2xml}:HL7" resetMessageType="true" resetMessageFormat="true">
+        <translation xmi:type="utility:ConstantString" string="ConvertFromBLOBtoDFDL"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_8" location="987,144" computeExpression="esql://routine/HL7DFDL#HL7DFDLSender_Handle_ACK_NACK.Main">
+        <translation xmi:type="utility:ConstantString" string="Handle_ACK_NACK"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_2" sourceNode="InTerminal.Input" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_1" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_10" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_11" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_12" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_6" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_13" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_15" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="OutTerminal.Output1" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="OutTerminal.Output" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out2" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_8" targetNode="OutTerminal.Output2" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out3" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.Retries">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.Retries" bundleName="HL7DFDL/HL7DFDLSender" pluginId="CommonHCP"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.Delay">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.Delay" bundleName="HL7DFDL/HL7DFDLSender" pluginId="CommonHCP"/>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

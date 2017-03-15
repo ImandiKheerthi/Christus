@@ -1,0 +1,97 @@
+BROKER SCHEMA Common.Routines.ESQL
+DECLARE hl7 NAMESPACE 'urn:hl7-org:v2xml';
+DECLARE ReceiverMessageSet CONSTANT CHARACTER 'HL7v27DFDL';
+DECLARE ReceiverMessageType CONSTANT CHARACTER '{urn:hl7-org:v2xml}:HL7';
+DECLARE ReceiverMessageFormat CONSTANT CHARACTER '';
+DECLARE FieldSeparator CONSTANT CHARACTER '|';
+DECLARE ComponentSeparator EXTERNAL CHARACTER '^';
+DECLARE RepeatSeparator EXTERNAL CHARACTER '~';
+DECLARE EscapeSeparator EXTERNAL CHARACTER '\';
+DECLARE SubComponentSeparator EXTERNAL CHARACTER '&';
+DECLARE ServiceString CONSTANT CHARACTER '^~\&';
+DECLARE SendingApplication CONSTANT CHARACTER 'BROKER.RECEIVER';
+DECLARE SendingFacility CONSTANT CHARACTER ' ';
+DECLARE ReceivingApplication CONSTANT CHARACTER ' ';
+DECLARE ReceivingFacility CONSTANT CHARACTER ' ';
+DECLARE ProcessingID CONSTANT CHARACTER 'P';
+DECLARE DefaultMessageControlID CONSTANT CHARACTER '123456789';
+
+	CREATE FUNCTION GetUserDefinedConfigurableServiceProperty(IN configurableService CHAR, IN property CHAR)
+		RETURNS CHAR
+		LANGUAGE JAVA
+		EXTERNAL NAME "org.christus.interfaces.common.BrokerFacade.getUserDefinedConfigurableServiceProperty";
+		
+	CREATE FUNCTION EnableQueue(IN queueMgr CHAR, IN queueName CHAR)
+		RETURNS CHAR
+		LANGUAGE JAVA
+		EXTERNAL NAME "org.christus.interfaces.common.AdminQueue.queueEnable";		
+				
+	CREATE FUNCTION DisableQueue(IN queueMgr CHAR, IN queueName CHAR)
+		RETURNS CHAR
+		LANGUAGE JAVA
+		EXTERNAL NAME "org.christus.interfaces.common.AdminQueue.queueDisable";
+		
+
+	CREATE FUNCTION IsIPActive(IN host CHAR, IN port CHAR)
+		RETURNS CHAR
+		LANGUAGE JAVA
+		EXTERNAL NAME "org.christus.interfaces.common.TCPIPMonitor.isPortActive";
+		
+	
+	-- Return unique identifier of 20 bytes length to be
+	-- used as message control ID in the ACK messages
+	CREATE FUNCTION GetUUID() RETURNS CHARACTER
+	BEGIN
+	    DECLARE UID CHARACTER;
+	    SET UID = REPLACE(UUIDASCHAR,'-');
+	    SET UID = RIGHT(UID,20);
+	    RETURN UID;
+	END;
+	
+	CREATE PROCEDURE GetLastExceptionDetail(IN InputTree REFERENCE, OUT MessageNumber INTEGER, OUT MessageText CHARACTER, OUT NodeLabel CHARACTER)
+    BEGIN
+        -- Create a reference to the first child of the exception list
+        DECLARE PtrException reference to InputTree.*[1];
+        -- Keep looping while the moves to the child of exception list work
+        WHILE LASTMOVE(PtrException) DO
+            -- Store the current values for the error number and text
+            IF PtrException.Number IS NOT NULL THEN
+                SET MessageNumber = PtrException.Number;
+                SET MessageText = PtrException.Text ||'||' ||PtrException.Insert[<].Text;
+                SET NodeLabel = PtrException.Label;
+            END IF;
+            -- Now move to the last child which should be the next exception list
+            MOVE PtrException LASTCHILD;
+        END WHILE;
+    END;
+
+
+	--Get the TO, FROM, CC and BCC
+	CREATE PROCEDURE GetEmailData(IN flowName CHARACTER, OUT toEmail CHARACTER, OUT fromEmail CHARACTER, OUT ccEmail CHARACTER, OUT bccEmail CHARACTER)	
+	BEGIN
+		DECLARE CONTINUE HANDLER FOR  SQLSTATE LIKE '%'
+		BEGIN
+			-- We don't need to do anything when it fails here.  We will check if all fields are populated at the end, and throw exception then if they are not
+		END;
+		
+		CALL Common.Routines.ESQL.GetUserDefinedConfigurableServiceProperty('Email_UDCS','TO_' || flowName) INTO toEmail;
+		IF(toEmail IS NULL OR toEmail = '') THEN
+			CALL Common.Routines.ESQL.GetUserDefinedConfigurableServiceProperty('Email_UDCS','TO') INTO toEmail;
+		END IF;
+		
+		CALL Common.Routines.ESQL.GetUserDefinedConfigurableServiceProperty('Email_UDCS','FROM_' || flowName) INTO fromEmail;
+		IF(fromEmail IS NULL OR fromEmail = '') THEN
+			CALL Common.Routines.ESQL.GetUserDefinedConfigurableServiceProperty('Email_UDCS','FROM') INTO fromEmail;
+		END IF;
+		
+		CALL Common.Routines.ESQL.GetUserDefinedConfigurableServiceProperty('Email_UDCS','CC_' || flowName) INTO ccEmail;
+		IF(ccEmail IS NULL OR ccEmail = '') THEN
+			CALL Common.Routines.ESQL.GetUserDefinedConfigurableServiceProperty('Email_UDCS','CC') INTO ccEmail;
+		END IF;
+		
+		CALL Common.Routines.ESQL.GetUserDefinedConfigurableServiceProperty('Email_UDCS','BCC_' || flowName) INTO bccEmail;
+		IF(bccEmail IS NULL OR bccEmail = '') THEN
+			CALL Common.Routines.ESQL.GetUserDefinedConfigurableServiceProperty('Email_UDCS','BCC') INTO bccEmail;
+		END IF;
+	END;	
+		

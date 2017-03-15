@@ -1,0 +1,107 @@
+BROKER SCHEMA ErrorHandling.Subflows
+
+
+CREATE COMPUTE MODULE SenderErrorHandling_ProcessError
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		-- CALL CopyEntireMessage();
+		DECLARE iMessageNumber INTEGER 0;
+		DECLARE cMessageText CHARACTER ' ';
+		DECLARE cNodeLabel CHARACTER '';
+		CALL CommonHCP.Routines.ESQL.GetLastExceptionDetail(InputExceptionList, iMessageNumber, cMessageText, cNodeLabel);
+		DECLARE cQMgrName CHARACTER TRIM(InputRoot.MQMD.ReplyToQMgr);
+		DECLARE cQName CHARACTER TRIM(InputRoot.MQMD.SourceQueue);
+		
+		
+        IF FIELDTYPE(OutputRoot.MQMD) IS NULL THEN
+		 	CREATE NEXTSIBLING OF OutputRoot.Properties DOMAIN 'MQMD';
+		 	SET OutputRoot.MQMD.CodedCharSetId = OutputRoot.Properties.CodedCharSetId;
+		 	SET OutputRoot.MQMD.Encoding = OutputRoot.Properties.Encoding; 
+        END IF;
+        
+        
+		-- In case of ACK TIMEOUT we get the Connection information in LocalEnvironment variables
+		IF InputLocalEnvironment.WrittenDestination.TCPIP.Output.ConnectionDetails.Hostname IS NOT NULL THEN
+			SET Environment.Variables.TCP.HOST = InputLocalEnvironment.WrittenDestination.TCPIP.Output.ConnectionDetails.Hostname;
+			SET Environment.Variables.TCP.PORT = InputLocalEnvironment.WrittenDestination.TCPIP.Output.ConnectionDetails.Port;
+		ELSEIF(CARDINALITY(InputExceptionList.*[]) > 0) THEN
+			
+			DECLARE start REFERENCE TO InputExceptionList.*[1];
+			WHILE start.Number IS NOT NULL DO 
+	
+		       IF Environment.Variables.TCP.HOST IS NULL OR Environment.Variables.TCP.PORT IS NULL THEN
+			       SET Environment.Variables.TCP.HOST = start.Insert[1].Text;
+			       SET Environment.Variables.TCP.PORT = start.Insert[2].Text;
+		       END IF;
+				-- Move start to the last child of the field to which it currently points
+			   MOVE start LASTCHILD;
+			END WHILE;
+		ELSEIF (InputLocalEnvironment.HL7 = '') THEN
+			
+		END IF;
+
+		SET OutputRoot.XMLNSC.COMMON.ERROR.ERROR_TYPE = 'Sender_In';
+		SET OutputRoot.XMLNSC.COMMON.ERROR.ERROR_STATUS = Environment.Variables.ErrorStatus;
+		SET OutputRoot.XMLNSC.COMMON.ERROR.ERROR_NUMBER = iMessageNumber;
+		SET OutputRoot.XMLNSC.COMMON.ERROR.ERROR_MESSAGE = cMessageText;
+		SET OutputRoot.XMLNSC.COMMON.ERROR.ORIGINAL_PAYLOAD =InputRoot.BLOB.BLOB;
+		SET OutputRoot.XMLNSC.COMMON.ERROR.BROKER_NAME = BrokerName;
+		SET OutputRoot.XMLNSC.COMMON.ERROR.EXECUTION_GROUP_NAME = ExecutionGroupLabel;
+		SET OutputRoot.XMLNSC.COMMON.ERROR.APPLICATION_NAME = ApplicationLabel;
+		SET OutputRoot.XMLNSC.COMMON.ERROR.FLOW_NAME = MessageFlowLabel;
+		SET OutputRoot.XMLNSC.COMMON.ERROR.NODE_LABEL = COALESCE(cNodeLabel, NodeLabel);
+		SET OutputRoot.XMLNSC.COMMON.ERROR.CREATE_TIME = CAST(COALESCE(Environment.Variable.StartTime, CURRENT_TIMESTAMP) AS CHARACTER FORMAT 'yyyy-MM-dd-HH.mm.ss.SSSSSS');
+		SET OutputRoot.XMLNSC.COMMON.ERROR.UPDATE_TIME = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyyy-MM-dd-HH.mm.ss.SSSSSS');
+		SET OutputRoot.XMLNSC.COMMON.ERROR.PAYLOAD = InputRoot.BLOB.BLOB;
+		SET OutputRoot.XMLNSC.COMMON.ERROR.QUEUE_NAME = cQName;
+		SET OutputRoot.XMLNSC.COMMON.ERROR.QMGR_NAME = cQMgrName;
+		SET OutputRoot.XMLNSC.COMMON.ERROR.QUEUE_DISABLE = COALESCE(Environment.Variables.QueueDisable, 'NO');
+		IF cQMgrName IS NOT NULL THEN
+			--CALL CommonHCP.Routines.ESQL.DisableQueue(cQMgrName, cQName) INTO Environment.Variables.QueueDisable;
+			IF STARTSWITH(TRIM(Environment.Variables.QueueDisable), 'SUCCESS:') THEN
+				SET Environment.Variables.Throw = 'YES';
+			ELSE
+				-- Try Queue Inihibit 1 more time after 30 seconds
+				IF SLEEP(30000) THEN
+					--CALL CommonHCP.Routines.ESQL.DisableQueue(cQMgrName, cQName) INTO Environment.Variables.QueueDisable;
+					IF STARTSWITH(TRIM(Environment.Variables.QueueDisable), 'SUCCESS:') THEN
+						SET Environment.Variables.Throw = 'YES';
+					END IF;
+				END IF;
+			END IF;
+		END IF;
+		SET OutputRoot.XMLNSC.COMMON.ERROR.QUEUE_DISABLE = Environment.Variables.QueueDisable;
+		SET OutputRoot.XMLNSC.COMMON.ERROR.IP_HOST= Environment.Variables.TCP.HOST;
+		SET OutputRoot.XMLNSC.COMMON.ERROR.IP_PORT= CAST(Environment.Variables.TCP.PORT AS CHAR);
+		SET OutputRoot.XMLNSC.COMMON.ERROR.MSG_ID = COALESCE(Environment.MsgID, InputRoot.MQRFH2.usr.uniqueMessageId);
+
+		IF(Environment.Variables.TCP.HOST IS NOT NULL) THEN
+			SET OutputRoot.XMLNSC.COMMON.ERROR.SEND_EMAIL= 'NO';
+		ELSE
+			SET OutputRoot.XMLNSC.COMMON.ERROR.SEND_EMAIL= 'YES'; -- We don't have the HOST, so connectivity monitor won't handle it; send E-mail
+		END IF;
+		IF STARTSWITH(TRIM(Environment.Variables.QueueDisable), 'SUCCESS:') AND Environment.Variables.TCP.HOST IS NOT NULL THEN
+			IF (LOWER(LEFT(cMessageText,18)) = 'connection refused'
+				OR UPPER(InputLocalEnvironment.HL7.FlowMilestoneReached) = 'TIMEOUT') THEN
+
+				PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+			END IF;
+		END IF;
+		PROPAGATE TO TERMINAL 'out' ;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

@@ -1,0 +1,84 @@
+BROKER SCHEMA Acks.Subflows
+
+DECLARE hl7 NAMESPACE 'urn:hl7-org:v2xml';
+DECLARE ReceiverMessageSet CONSTANT CHARACTER 'HL7v27DFDL';
+DECLARE ReceiverMessageType CONSTANT CHARACTER '{urn:hl7-org:v2xml}:HL7';
+DECLARE ReceiverMessageFormat CONSTANT CHARACTER '';
+DECLARE FailureCount SHARED INTEGER 0;
+
+
+CREATE COMPUTE MODULE BuildAck_CreateAck
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+        DECLARE env REFERENCE TO Environment.Variables;
+        DECLARE localenv REFERENCE TO InputLocalEnvironment;
+
+        SET OutputLocalEnvironment= InputLocalEnvironment;
+        SET env.FlowMilestoneReached = 'BUILDACK';
+        SET env.SendNACK = 'YES';
+        SET env.EndConnection = 'NO';
+        SET env.HL7RC = 'AR';
+        SET env.ErrorCondition = 'Error while building ACK message';
+
+        -- Create MSH and MSA segment under OutputRoot.DFDL
+        CREATE FIELD OutputRoot.DFDL.hl7:HL7.hl7:MSH;
+        CREATE FIELD OutputRoot.DFDL.hl7:HL7.hl7:anyHL7Segment.hl7:MSA;
+
+        -- Build MSH Segment
+        CALL CommonHCP.Routines.ESQL.BuildACKMSH(env.InputMSH, OutputRoot.DFDL.hl7:HL7.hl7:MSH);
+        -- Build MSA Segment with ACK Code AA. No error text in this case.
+        CALL CommonHCP.Routines.ESQL.BuildACKMSA(env.InputMSH, localenv, OutputRoot.DFDL.hl7:HL7.hl7:anyHL7Segment.hl7:MSA, 'AA', ' ');
+
+        SET env.FlowMilestoneReached = 'SENDACK';
+        SET env.SendNACK = 'YES';
+        SET env.EndConnection = 'NO';
+        SET env.HL7RC = 'AR';
+        SET env.ErrorCondition = 'Error while sending ACK message';
+
+        -- Serialize the message
+        DECLARE hl7BitStream BLOB
+            ASBITSTREAM(OutputRoot.DFDL
+                ENCODING InputRoot.Properties.Encoding
+                CCSID InputRoot.Properties.CodedCharSetId
+                SET ReceiverMessageSet
+                TYPE ReceiverMessageType
+                FORMAT ReceiverMessageFormat);
+
+        -- Leading MLLP byte is set as a pattern parameter
+        DECLARE LeadingMLLPBytes  BLOB  X'0B';
+        DECLARE TrailingMLLPBytes BLOB X'1C0D';
+        SET OutputRoot.BLOB.BLOB = LeadingMLLPBytes || hl7BitStream||TrailingMLLPBytes;
+        SET OutputRoot.DFDL = NULL;
+        SET Environment.Variables = NULL;
+
+        -- Send the acknowledgement message to the sending application
+        -- Any failure in delivering the message, the exception will be thrown by the 
+        -- TCPIPServerOutput node which will be caught by the TCPIPServerInput node's catch terminal
+        PROPAGATE TO TERMINAL 'out' MESSAGE OutputRoot;
+        
+
+        -- Reset the flow milestone as it is successful case
+        SET env.FlowMilestoneReached = ' ';
+        SET env.SendNACK = ' ';
+        SET env.EndConnection = ' ';
+        SET env.HL7RC = ' ';
+        SET env.ErrorCondition = ' ';
+        SET FailureCount = 0;
+
+        RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

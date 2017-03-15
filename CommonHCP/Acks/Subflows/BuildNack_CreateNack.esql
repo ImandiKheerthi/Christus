@@ -1,0 +1,105 @@
+BROKER SCHEMA Acks.Subflows
+
+
+CREATE COMPUTE MODULE BuildNack_CreateNack
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+        DECLARE hl7 NAMESPACE 'urn:hl7-org:v2xml';
+        DECLARE env REFERENCE TO Environment.Variables;      
+        DECLARE localenv REFERENCE TO InputLocalEnvironment;
+        
+        -- If it has failed to send once, don't try again, and just close the connection.
+        IF (FailureCount > 0) THEN
+            SET FailureCount = 0;
+            SET Environment.Variables = NULL;
+            PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+            RETURN FALSE;
+        END IF;
+
+        SET OutputRoot.Properties = InputRoot.Properties;
+        SET OutputLocalEnvironment = InputLocalEnvironment;
+        -- Copy environment variables into local environment
+        -- This helps if the exception occurs in this compute node itself
+        SET OutputLocalEnvironment.Variables = Environment.Variables;
+        
+        -- Reset the environment variables
+        -- The filter node routes message to false terminal when exception occurs here
+        SET env.FlowMilestoneReached = ' ';
+        SET env.SendNACK = ' ';
+        SET env.EndConnection = ' ';
+        SET env.HL7RC = ' ';
+        SET env.ErrorCondition = ' ';
+        
+        DECLARE LocalEnv REFERENCE TO OutputLocalEnvironment.Variables;
+        
+        -- Create MSH and MSA segment under OutputRoot.DFDL
+        CREATE FIELD OutputRoot.DFDL.hl7:HL7.hl7:MSH;
+        CREATE FIELD OutputRoot.DFDL.hl7:HL7.hl7:anyHL7Segment.hl7:MSA;   
+
+        IF (LocalEnv.FlowMilestoneReached IS NOT NULL) THEN
+            IF (LocalEnv.SendNACK = 'YES') THEN
+                -- Build MSH segment for acknowledgement message
+                CALL CommonHCP.Routines.ESQL.BuildACKMSH(LocalEnv.InputMSH, OutputRoot.DFDL.hl7:HL7.hl7:MSH);             
+                -- Build MSA segment for acknowledgement message
+                CALL CommonHCP.Routines.ESQL.BuildACKMSA(LocalEnv.InputMSH, localenv, OutputRoot.DFDL.hl7:HL7.hl7:anyHL7Segment.hl7:MSA, LocalEnv.HL7RC, LocalEnv.ErrorCondition);                
+            END IF;
+        ELSE
+            SET LocalEnv.HL7RC = 'AR';
+            DECLARE MessageNumber INTEGER 0;
+            DECLARE MessageText CHARACTER ' ';
+			DECLARE NodeLabel CHARACTER '';
+			CALL CommonHCP.Routines.ESQL.GetLastExceptionDetail(InputExceptionList, MessageNumber, MessageText, NodeLabel);
+
+            IF MessageNumber > 0 THEN
+                SET LocalEnv.ErrorCondition = ('BIP') || (CAST (MessageNumber AS CHARACTER)) || (' : ') || (MessageText);
+                -- Build MSH segment for acknowledgement message
+                CALL CommonHCP.Routines.ESQL.BuildACKMSH(LocalEnv.InputMSH, OutputRoot.DFDL.hl7:HL7.hl7:MSH);             
+                -- Build MSH segment for acknowledgement message
+                CALL CommonHCP.Routines.ESQL.BuildACKMSA(LocalEnv.InputMSH, localenv.InputMSH, OutputRoot.DFDL.hl7:HL7.hl7:anyHL7Segment.hl7:MSA, LocalEnv.HL7RC, LocalEnv.ErrorCondition);                
+
+                SET OutputLocalEnvironment.SendNACK = 'YES';
+            END IF;
+        END IF;
+        
+        SET FailureCount = FailureCount + 1; -- Increase the failure count
+        
+        IF LocalEnv.SendNACK = 'YES' THEN
+            DECLARE hl7BitStream BLOB
+                ASBITSTREAM(OutputRoot.DFDL
+                    CCSID OutputRoot.Properties.CodedCharSetId
+                    ENCODING OutputRoot.Properties.Encoding
+                    SET ReceiverMessageSet
+                    TYPE ReceiverMessageType
+                    FORMAT ReceiverMessageFormat);
+                    
+	         DECLARE LeadingMLLPBytes BLOB X'0B';
+	         DECLARE TrailingMLLPBytes BLOB X'1C0D';
+            -- Add leading MLLP bytes       
+            SET OutputRoot.BLOB.BLOB = LeadingMLLPBytes||hl7BitStream||TrailingMLLPBytes;  
+
+            SET OutputRoot.DFDL = NULL; -- Delete the DFDL tree
+            PROPAGATE TO TERMINAL 'out1' Message OutputRoot DELETE NONE; -- Propagates the ACK message to TCPIPServerOutput node
+            SET OutputRoot.BLOB.BLOB = NULL; -- This statement gets executed if the propagate statement is successful in delivering the ACK message
+        END IF;     
+
+        -- Close the TCPIP connection if the following condition is satisfied
+        -- Also reset the failure count
+        -- Error limit is defined by the pattern parameter
+        SET OutputRoot = InputRoot;
+        SET Environment.Variables = NULL;             
+        RETURN TRUE;    
+    END;    
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

@@ -1,0 +1,489 @@
+BROKER SCHEMA CommonHCP.Routines.ESQL
+DECLARE hl7 NAMESPACE 'urn:hl7-org:v2xml';
+DECLARE ReceiverMessageSet CONSTANT CHARACTER 'HL7v27DFDL';
+DECLARE ReceiverMessageType CONSTANT CHARACTER '{urn:hl7-org:v2xml}:HL7';
+DECLARE ReceiverMessageFormat CONSTANT CHARACTER '';
+DECLARE FieldSeparator CONSTANT CHARACTER '|';
+DECLARE ComponentSeparator EXTERNAL CHARACTER '^';
+DECLARE RepeatSeparator EXTERNAL CHARACTER '~';
+DECLARE EscapeSeparator EXTERNAL CHARACTER '\';
+DECLARE SubComponentSeparator EXTERNAL CHARACTER '&';
+DECLARE ServiceString CONSTANT CHARACTER '^~\&';
+DECLARE SendingApplication CONSTANT CHARACTER 'BROKER.RECEIVER';
+DECLARE SendingFacility CONSTANT CHARACTER ' ';
+DECLARE ReceivingApplication CONSTANT CHARACTER ' ';
+DECLARE ReceivingFacility CONSTANT CHARACTER ' ';
+DECLARE ProcessingID CONSTANT CHARACTER 'P';
+DECLARE DefaultMessageControlID CONSTANT CHARACTER '123456789';
+		
+		
+	CREATE FUNCTION GetUserDefinedConfigurableServiceProperty(IN configurableService CHAR, IN property CHAR)
+		RETURNS CHAR
+		LANGUAGE JAVA
+		EXTERNAL NAME "org.christus.interfaces.common.BrokerFacade.getUserDefinedConfigurableServiceProperty";
+		
+	CREATE FUNCTION QueueDepth(IN queueMgr CHAR, IN queueName CHAR)
+		RETURNS CHAR
+		LANGUAGE JAVA
+		EXTERNAL NAME "org.christus.interfaces.common.AdminQueue.queueDepth";
+		
+	CREATE FUNCTION EnableQueue(IN queueMgr CHAR, IN queueName CHAR)
+		RETURNS CHAR
+		LANGUAGE JAVA
+		EXTERNAL NAME "org.christus.interfaces.common.AdminQueue.queueEnable";		
+				
+	CREATE FUNCTION DisableQueue(IN queueMgr CHAR, IN queueName CHAR)
+		RETURNS CHAR
+		LANGUAGE JAVA
+		EXTERNAL NAME "org.christus.interfaces.common.AdminQueue.queueDisable";
+		
+
+	CREATE FUNCTION IsIPActive(IN host CHAR, IN port CHAR)
+		RETURNS CHAR
+		LANGUAGE JAVA
+		EXTERNAL NAME "org.christus.interfaces.common.TCPIPMonitor.isPortActive";
+		
+	-- The following procedure builds the MSH segment for ACK messages
+	-- Environment.PatternVariables and OutputRoot are passed as reference
+	CREATE PROCEDURE BuildACKMSH(IN MSHEnv REFERENCE, IN MSHFields REFERENCE) 
+	BEGIN
+	    -- Assign the FieldSeparator value from input message if it is present
+	    IF MSHEnv.Field1 IS NOT NULL THEN
+	        SET MSHFields.hl7:"MSH.1.FieldSeparator" = MSHEnv.Field1;
+	    ELSE
+	        SET MSHFields.hl7:"MSH.1.FieldSeparator" = FieldSeparator;
+	    END IF;
+	
+	    -- Assign the ServiceString value from input message if it is present
+		IF MSHEnv.Field2.ComponentSeparator IS NOT NULL THEN
+			SET MSHFields.hl7:"MSH.2.ServiceString".hl7:ComponentSeparator = MSHEnv.Field2.ComponentSeparator;
+		ELSE
+			SET MSHFields.hl7:"MSH.2.ServiceString".hl7:ComponentSeparator = ComponentSeparator;
+		END IF;
+		IF MSHEnv.Field2.RepeatSeparator IS NOT NULL THEN
+			SET MSHFields.hl7:"MSH.2.ServiceString".hl7:RepeatSeparator = MSHEnv.Field2.RepeatSeparator;
+		ELSE
+			SET MSHFields.hl7:"MSH.2.ServiceString".hl7:RepeatSeparator = RepeatSeparator;
+		END IF;
+		IF MSHEnv.Field2.EscapeSeparator IS NOT NULL THEN
+			SET MSHFields.hl7:"MSH.2.ServiceString".hl7:EscapeCharacter = MSHEnv.Field2.EscapeSeparator;
+		ELSE
+			SET MSHFields.hl7:"MSH.2.ServiceString".hl7:EscapeCharacter = EscapeSeparator;
+		END IF;
+		IF MSHEnv.Field2.SubComponentSeparator IS NOT NULL THEN
+			SET MSHFields.hl7:"MSH.2.ServiceString".hl7:SubComponentSeparator = MSHEnv.Field2.SubComponentSeparator;
+		ELSE
+			SET MSHFields.hl7:"MSH.2.ServiceString".hl7:SubComponentSeparator = SubComponentSeparator;
+		END IF;
+	
+	    -- Get the values from UDPs and assign to field 3 and 4
+	    SET MSHFields.hl7:"MSH.3.SendingApplication".hl7:"HD.1" = MessageFlowLabel;
+	    SET MSHFields.hl7:"MSH.4.SendingFacility".hl7:"HD.1" = ExecutionGroupLabel;
+	
+	    -- Assign the SendingApplication value from input message if it is present
+	    IF MSHEnv.Field3 IS NOT NULL THEN
+	        SET MSHFields.hl7:"MSH.5.ReceivingApplication".hl7:"HD.1" = MSHEnv.Field3;
+	    ELSE
+	        SET MSHFields.hl7:"MSH.5.ReceivingApplication".hl7:"HD.1" = ReceivingApplication;
+	    END IF;
+	
+	    -- Assign the SendingFacility value from input message if it is present
+	    IF MSHEnv.Field4 IS NOT NULL THEN
+	        SET MSHFields.hl7:"MSH.6.ReceivingFacility".hl7:"HD.1" = MSHEnv.Field4;
+	    ELSE
+	        SET MSHFields.hl7:"MSH.6.ReceivingFacility".hl7:"HD.1" = ReceivingFacility;
+	    END IF;
+	
+	    -- Compute date time in YYYYMMddHHmmss format  
+	    IF MSHEnv.Field12 IS NOT NULL THEN
+	    	DECLARE MsgVersion FLOAT;
+	    	SET MsgVersion = CAST(SUBSTRING(MSHEnv.Field12 FROM 1 FOR 3) AS FLOAT);
+	    	IF MsgVersion < 2.6 THEN
+	    		SET MSHFields.hl7:"MSH.7.DateTimeOfMessage".hl7:"TS.1" = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'YYYYMMddHHmmss');
+	    	ELSE     		
+	    		SET MSHFields.hl7:"MSH.7.DateTimeOfMessage" = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'YYYYMMddHHmmss');
+	    	END IF;
+	    ELSE
+	    	IF ReceiverMessageSet = 'HL7v27DFDL' OR ReceiverMessageSet = 'HL7v26DFDL' THEN
+	    		SET MSHFields.hl7:"MSH.7.DateTimeOfMessage" = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'YYYYMMddHHmmss');
+	    	ELSE 
+	    		SET MSHFields.hl7:"MSH.7.DateTimeOfMessage".hl7:"TS.1" = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'YYYYMMddHHmmss');
+	    	END IF;
+	    END IF;
+	    
+	    -- Type of message - ACK in case of acknowledgement
+	    SET MSHFields.hl7:"MSH.9.MessageType".hl7:"MSG.1" = 'ACK';
+		SET MSHFields.hl7:"MSH.9.MessageType".hl7:"MSG.2" = 'ACK';
+		SET MSHFields.hl7:"MSH.9.MessageType".hl7:"MSG.3" = 'ACK';
+	
+	    -- Get the 20 bytes length of UID and assign it as message control ID
+	    SET MSHFields.hl7:"MSH.10.MessageControlID" = GetUUID();
+	
+	    -- Assign the ProcessingID value from the input message
+	    IF MSHEnv.Field11 IS NOT NULL THEN
+	        SET MSHFields.hl7:"MSH.11.ProcessingID".hl7:"PT.1" = MSHEnv.Field11;
+	    ELSE
+	        SET MSHFields.hl7:"MSH.11.ProcessingID".hl7:"PT.1" = ProcessingID;
+	    END IF;
+	
+	    -- Assign the VersionID value from the input message - by default it is 2.2
+	    IF MSHEnv.Field12 IS NOT NULL THEN
+	        SET MSHFields.hl7:"MSH.12.VersionID".hl7:"VID.1" = MSHEnv.Field12;
+	    ELSE
+	        SET MSHFields.hl7:"MSH.12.VersionID".hl7:"VID.1" = '2.2';
+	    END IF;
+	END;
+	
+	-- Return unique identifier of 20 bytes length to be
+	-- used as message control ID in the ACK messages
+	CREATE FUNCTION GetUUID() RETURNS CHARACTER
+	BEGIN
+	    DECLARE UID CHARACTER;
+	    SET UID = REPLACE(UUIDASCHAR,'-');
+	    SET UID = RIGHT(UID,20);
+	    RETURN UID;
+	END;
+	
+	CREATE PROCEDURE BuildACKMSA(IN MSHEnv REFERENCE, IN MSHLocalEnv REFERENCE, IN MSAFields REFERENCE, IN AckCode CHARACTER, IN ErrorText CHARACTER) 
+	BEGIN
+	    -- Assign the ACK code sent from BuildACK or BuildNACK nodes
+	    SET MSAFields.hl7:"MSA.1.AcknowledgementCode" = AckCode;
+	
+	    -- Get the message control ID from the input message and assign it
+	    IF MSHEnv.Field10 IS NOT NULL THEN
+	        SET MSAFields.hl7:"MSA.2.MessageControlID" = MSHEnv.Field10;
+	    ELSEIF MSHLocalEnv.HL7.InputMSH.Field10 IS NOT NULL THEN
+	        SET MSAFields.hl7:"MSA.2.MessageControlID" = MSHLocalEnv.HL7.InputMSH.Field10;
+	    ELSE
+	        SET MSAFields.hl7:"MSA.2.MessageControlID" = DefaultMessageControlID;
+	    END IF;
+	
+	    -- Error text in case of ACK AE or ACK AR
+	    SET MSAFields.hl7:"MSA.3.TextMessage" = ErrorText;
+	
+	    -- Get the sequence number from input message if present
+	    IF MSHEnv.Field13 IS NOT NULL THEN
+	        SET MSAFields.hl7:"MSA.4.ExpectedSequenceNumber" = MSHEnv.Field13;
+	    END IF;
+	END;
+	
+	CREATE PROCEDURE GetLastExceptionDetail(IN InputTree REFERENCE, OUT MessageNumber INTEGER, OUT MessageText CHARACTER, OUT NodeLabel CHARACTER)
+    BEGIN
+        -- Create a reference to the first child of the exception list
+        DECLARE PtrException reference to InputTree.*[1];
+        -- Keep looping while the moves to the child of exception list work
+        WHILE LASTMOVE(PtrException) DO
+            -- Store the current values for the error number and text
+            IF PtrException.Number IS NOT NULL THEN
+                SET MessageNumber = PtrException.Number;
+                SET MessageText = PtrException.Text ||'||' ||PtrException.Insert[<].Text;
+                SET NodeLabel = PtrException.Label;
+            END IF;
+            -- Now move to the last child which should be the next exception list
+            MOVE PtrException LASTCHILD;
+        END WHILE;
+    END;
+	
+	CREATE PROCEDURE GetLastExceptionExpandedDetail(IN InputTree REFERENCE, OUT MessageNumber INTEGER, OUT MessageText CHARACTER, OUT NodeLabel CHARACTER)
+    BEGIN
+        -- Create a reference to the first child of the exception list
+        DECLARE PtrException reference to InputTree.*[1];
+        DECLARE insertPos INTEGER;
+        -- Keep looping while the moves to the child of exception list work
+        WHILE LASTMOVE(PtrException) DO
+            -- Store the current values for the error number and text
+            IF PtrException.Number IS NOT NULL THEN
+                SET MessageNumber = PtrException.Number;
+                SET insertPos = CARDINALITY(PtrException.Insert[]);
+                SET MessageText = '';
+                WHILE(insertPos > 0) DO
+                	IF(MessageText <> '') THEN
+	                	SET MessageText = MessageText || '->' ;
+            		END IF;
+	                SET MessageText = MessageText || PtrException.Insert[insertPos].Text;
+	                SET insertPos = insertPos - 1;
+	            END WHILE;
+	            SET MessageText = PtrException.Text || ' || ' ||MessageText;
+                SET NodeLabel = PtrException.Label;
+            END IF;
+            -- Now move to the last child which should be the next exception list
+            MOVE PtrException LASTCHILD;
+        END WHILE;
+    END;
+    
+    /*****************************
+    Taking the facility mnemonic as parameter 1, it uses the FacilityToRegion UDCS to look up the region mnemonic; 
+    if the faility is not found in the UDCS, it returns the value passed as the second parameter (DefaultReturnValue).
+    This function wraps an error handler around the Java call, so it should never throw an error
+    ******************************/
+    CREATE FUNCTION GetRegionFromFacility(IN Facility CHARACTER, IN DefaultReturnValue CHARACTER) RETURNS CHARACTER
+	BEGIN
+	    DECLARE Region CHARACTER;
+		BEGIN			
+			-- If Aanything happens in the call to Common.Routines.ESQL.GetUserDefinedConfigurableServiceProperty, do nothing
+			DECLARE CONTINUE HANDLER FOR  SQLSTATE LIKE '%'
+			BEGIN
+				SET Region = DefaultReturnValue;
+			END;
+			CALL CommonHCP.Routines.ESQL.GetUserDefinedConfigurableServiceProperty('FacilityToRegion', Facility) INTO Region;
+		END;
+	    RETURN Region;
+	END;
+		
+	 
+	CREATE FUNCTION GetValue (IN ref_ParentSegment REFERENCE, IN PathToGet CHARACTER) RETURNS CHARACTER
+	BEGIN
+		DECLARE retValue CHARACTER;
+		DECLARE workingOnField CHARACTER;
+		DECLARE tmpStr CHARACTER;
+		DECLARE bFound BOOLEAN TRUE;
+		DECLARE currentOccurance INTEGER;
+		
+		WHILE(PathToGet <> '' AND bFound) DO
+		
+			
+			IF (POSITION('\' IN PathToGet) > 0) THEN
+				SET workingOnField = SUBSTRING(PathToGet BEFORE '\');
+				SET PathToGet = SUBSTRING(PathToGet AFTER '\');
+			ELSE
+				SET workingOnField = PathToGet;
+				SET PathToGet = '';
+			END IF;
+			
+			SET tmpStr = SUBSTRING(workingOnField AFTER '[');
+			IF(tmpStr IS NOT NULL AND tmpStr <> '') THEN
+				SET currentOccurance = CAST(TRANSLATE(tmpStr, '[]') AS INTEGER);
+				SET workingOnField = SUBSTRING(workingOnField BEFORE '[');
+			ELSE
+				SET currentOccurance = 1;
+			END IF;
+			
+			
+			IF(FIELDNAME(ref_ParentSegment.hl7:{workingOnField}[currentOccurance]) IS NULL) THEN
+				SET bFound = FALSE;
+			ELSE
+				MOVE ref_ParentSegment TO ref_ParentSegment.hl7:{workingOnField}[currentOccurance];
+			END IF;
+			
+		END WHILE;
+		
+		IF(bFound)THEN
+			SET retValue = ref_ParentSegment;
+		END IF;
+		
+		RETURN retValue;
+	END;
+		
+
+	
+	CREATE PROCEDURE SetValue (IN ref_ParentSegment REFERENCE, IN PathToSet CHARACTER, IN Value CHARACTER)
+	BEGIN
+		DECLARE ref_ValueField REFERENCE to ref_ParentSegment;
+		CALL EnsureFieldExist (ref_ParentSegment, PathToSet, ref_ValueField);
+		SET ref_ValueField = Value;  
+	END; 
+	
+	CREATE PROCEDURE EnsureFieldExist (IN ref_ParentSegment REFERENCE, IN PathToInsert CHARACTER, OUT ref_Field REFERENCE) 
+	BEGIN
+		DECLARE workingOnField CHARACTER;
+		DECLARE remainingPathToInsert CHARACTER PathToInsert;
+		DECLARE tmpStr CHARACTER;
+		DECLARE occuranceToInsert INTEGER;
+		DECLARE currentOccurance INTEGER;
+		DECLARE ref_ChildField REFERENCE TO ref_ParentSegment;
+		
+		IF (POSITION('\' IN remainingPathToInsert) > 0) THEN
+			SET workingOnField = SUBSTRING(PathToInsert BEFORE '\');
+			SET remainingPathToInsert = SUBSTRING(remainingPathToInsert AFTER '\');
+		ELSE
+			SET workingOnField = PathToInsert;
+			SET remainingPathToInsert = '';
+		END IF;
+			
+		SET tmpStr = SUBSTRING(workingOnField AFTER '[');
+		IF(tmpStr IS NOT NULL AND tmpStr <> '') THEN
+			SET occuranceToInsert = CAST(TRANSLATE(tmpStr, '[]') AS INTEGER);
+			SET workingOnField = SUBSTRING(workingOnField BEFORE '[');
+		ELSE
+			SET occuranceToInsert = 1;
+		END IF;
+
+		IF(FIELDNAME(ref_ParentSegment.hl7:{workingOnField}) IS NULL) THEN --Field does not exist at all, so create first one
+			MOVE ref_ChildField TO ref_ParentSegment;
+			MOVE ref_ChildField FIRSTCHILD;
+			--Find position to insert new child
+			WHILE(LASTMOVE(ref_ChildField) AND GetOrdinal(FIELDNAME(ref_ChildField)) < GetOrdinal(workingOnField)) DO
+				MOVE ref_ChildField NEXTSIBLING;
+			END WHILE;
+			
+			IF(FIELDNAME(ref_ChildField) = FIELDNAME(ref_ParentSegment)) THEN  --If parent and child is the same, parent had no children, so create firat child
+				CREATE FIRSTCHILD OF ref_ChildField as ref_ChildField NAMESPACE hl7 NAME workingOnField;
+			ELSEIF(GetOrdinal(FIELDNAME(ref_ChildField)) < GetOrdinal(workingOnField)) THEN --It reached the end prior to
+				CREATE NEXTSIBLING OF ref_ChildField as ref_ChildField NAMESPACE hl7 NAME workingOnField;
+			ELSE
+				CREATE PREVIOUSSIBLING OF ref_ChildField as ref_ChildField NAMESPACE hl7 NAME workingOnField;
+			END IF;
+		END IF;
+		
+		MOVE ref_ChildField To ref_ParentSegment.hl7:{workingOnField}; -- Since first field exists here, move child to it 
+		SET currentOccurance = 1;
+		
+		WHILE(currentOccurance <= occuranceToInsert) DO
+			IF(FIELDNAME(ref_ParentSegment.hl7:{workingOnField}[currentOccurance]) IS NULL) THEN
+				CREATE NEXTSIBLING OF ref_ChildField as ref_ChildField NAMESPACE hl7 NAME workingOnField;
+			END IF;
+			MOVE ref_ChildField To ref_ParentSegment.hl7:{workingOnField}[currentOccurance]; -- Move child to currentOccurance since it might be the correct child 
+			SET currentOccurance = currentOccurance + 1;
+		END WHILE;
+			
+		IF(remainingPathToInsert <> '') THEN
+			CALL EnsureFieldExist(ref_ChildField, remainingPathToInsert, ref_Field);
+		ELSE
+			MOVE ref_Field TO ref_ChildField; 
+		END IF;
+		
+	END;
+	
+	-- This takes a reference to the first field in an HL7 segment, e.g. PID.1.SetIDPID, and it will update that reference to point to the sibling just previous to the FieldToInsert 
+	CREATE PROCEDURE GetPreviousSibling (INOUT ref_Segment REFERENCE, IN FieldToInsert CHARACTER)
+	BEGIN
+		DECLARE bPrevSegFound BOOLEAN FALSE;
+		DECLARE iFieldToInsertPos INTEGER;
+		DECLARE iSearchFieldPos INTEGER;
+		DECLARE tmpChar CHARACTER;
+		DECLARE ref_returnSegment REFERENCE TO ref_Segment;
+		
+		SET iFieldToInsertPos = GetOrdinal(FieldToInsert);
+		
+		WHILE(LASTMOVE(ref_Segment) AND NOT bPrevSegFound) DO
+		
+			IF(iFieldToInsertPos < GetOrdinal(FIELDNAME(ref_Segment))) THEN
+				SET bPrevSegFound = TRUE;
+			END IF;
+			
+			IF(NOT bPrevSegFound) THEN
+				MOVE ref_returnSegment TO ref_Segment; 
+				MOVE ref_Segment NEXTSIBLING;
+			ELSE
+				MOVE ref_Segment PREVIOUSSIBLING;
+			END IF;
+		END WHILE;
+		
+		IF(NOT bPrevSegFound) THEN
+			MOVE ref_Segment TO ref_returnSegment;
+		END IF;
+	END;
+	
+	-- This function returns the ordinal position of the field based on its name, e.g. if FieldName is 'PID.1.SetIDPID', it will return 1;	
+	CREATE FUNCTION GetOrdinal (IN FldName CHARACTER) RETURNS INTEGER
+	LANGUAGE ESQL
+	BEGIN
+		DECLARE tmpChar CHARACTER;
+		
+		SET tmpChar = SUBSTRING(FldName AFTER '.');  --Get anything after the first .
+		
+		IF(tmpChar IS NULL) THEN
+			SET tmpChar = FldName;
+		ELSEIF(POSITION('.' IN tmpChar) > 0) THEN
+			SET tmpChar = SUBSTRING(tmpChar BEFORE '.');
+		END IF;
+		
+		RETURN CAST(tmpChar AS INTEGER);
+	END;
+	
+	--Taking a reference to an anyHL7Segment or a child of it (e.g. PID), it will set all fields in the FieldSet parameter to NULL
+	CREATE PROCEDURE procClearFieldsInSet (IN refSegment REFERENCE, IN FieldSet CHARACTER)
+	BEGIN
+		
+		--Remove spaces in the provided list
+		--By enclosing the provided list in commas, all elements are enclosed in commas, which makes it easier later;
+		--  without it, there would have to be special cases for first, last and single elements
+		--  now, I can search for the current field (n) by searching for ',n,' because no matter where in the list n is, it has commas on both sides
+		--  leading, trailing and single elemts would not have had that otherwise
+		SET FieldSet = ',' || REPLACE(FieldSet, ' ', '') || ',';
+		
+		--Move to first child until we find the segment reference or we can't move firther
+		WHILE(LASTMOVE(refSegment) AND LENGTH(FIELDNAME(refSegment)) <> 3) DO
+			MOVE refSegment FIRSTCHILD;
+		END WHILE;
+		
+		--If we exited because the LEN was 3 above, we need to move to the first child of it
+		IF(LENGTH(FIELDNAME(refSegment)) = 3) THEN
+			MOVE refSegment FIRSTCHILD;
+		END IF;
+		
+		DECLARE ordinal CHARACTER;  --The ordinal of each field, i.e PID.3. is ordinal 3
+		
+		DECLARE refTmp REFERENCE to refSegment;
+		DECLARE needsMove BOOLEAN TRUE;
+		 
+		--Note that when a reference is set to NULL, it can't be moved, which is why the tmpReference is needed
+		WHILE(LASTMOVE(refSegment) AND FieldSet <> ',') DO
+			set ordinal = CAST(GetOrdinal(FIELDNAME(refSegment)) AS CHARACTER);
+			IF(POSITION(',' || ordinal || ',' IN FieldSet) > 0) THEN
+				MOVE refTmp TO refSegment;		--Save current reference to the tmpReference
+				
+				-- Try to improve performance by removing the field we are clearing; if all fields in the set has been handled, only a ',' will be left
+				--SET FieldSet = REPLACE(FieldSet, ',' || ordinal, '');  
+				
+				--ordinal 1 is a special case since it can't go to previous child			
+				IF(ordinal = '1') THEN
+					MOVE refTmp NEXTSIBLING;	--Move tmpReference to next sibling
+					SET needsMove = FALSE;
+				ELSE
+					MOVE refTmp PREVIOUSSIBLING;	--Move tmpReference to previous sibling
+					SET needsMove = TRUE;
+				END IF;
+				SET refSegment = NULL;			--Clear the intended reference
+				MOVE refSegment to refTmp;		--Set the original reference to the tmp
+			END IF;
+			IF(needsMove) THEN
+				MOVE refSegment NEXTSIBLING;
+			END IF;
+			SET needsMove = TRUE;
+		END WHILE;
+	END;
+	
+	--Prepares a special case for procClearFieldsInSet where it sets the FieldSet to all fields from RangeStart to RangeEnd (inclusive)
+	CREATE PROCEDURE procClearFieldsInRange (IN refSegment REFERENCE, IN RangeStart INTEGER, IN RangeEnd INTEGER)
+	BEGIN
+		--Just build the comma separated list with the numbers in the range, and pass it to procClearFieldsInSet
+		DECLARE rangeStr CHARACTER '';
+		
+		while(RangeStart <= RangeEnd) DO
+			IF(rangeStr <> '') THEN
+				SET rangeStr = rangeStr || ',';
+			END IF;
+			SET rangeStr = rangeStr || cast(RangeStart AS CHARACTER);
+			set RangeStart = RangeStart + 1;
+		END WHILE;
+		
+		CALL procClearFieldsInSet(refSegment, rangeStr);
+	END;
+	
+	--Prepares a special case for procClearFieldsInSet where it sets the FieldSet to all fields from RangeStart to 99 (inclusive)
+	CREATE PROCEDURE procClearFieldsToEnd (IN refSegment REFERENCE, IN RangeStart INTEGER)
+	BEGIN
+		--Just set upper range to 99, which is more than enough, and pass that to the procClearFieldsInSet
+		DECLARE RangeEnd INTEGER 99;
+		
+		CALL procClearFieldsInRange(refSegment, RangeStart, RangeEnd);
+	END;
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

@@ -1,0 +1,1 @@
+mqsicreateconfigurableservice TIIBBK01 -c TCPIPServer -o NLA_MTADM_ADT_Receiver -n ExpireConnectionSec,MaxReceiveRecordBytes,MaximumConnections,Port,SO_KEEPALIVE,SO_LINGER,SO_LINGER_TIMEOUT_SEC,SO_RCVBUF,SO_SNDBUF,SSLCiphers,SSLClientAuth,SSLKeyAlias,SSLProtocol,TCP_NODELAY,TrafficClass  -v "-1","100000000","100","1112","false","false","-1","0","0","","","","","false","-1"

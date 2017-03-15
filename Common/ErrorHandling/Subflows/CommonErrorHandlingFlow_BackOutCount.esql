@@ -1,0 +1,14 @@
+BROKER SCHEMA ErrorHandling.Subflows
+
+
+CREATE FILTER MODULE CommonErrorHandlingFlow_BackOutCount
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Root.MQMD.BackoutCount='0' THEN
+			RETURN TRUE;
+		ELSE
+			RETURN FALSE;
+		END IF;
+	END;
+
+END MODULE;

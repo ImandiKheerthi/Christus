@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="iso-8859-1"?><!--
+ v2.xml Message Definitions for Version 2.7 
+ Copyright (c) 1999-2011, Health Level Seven. All rights reserved. 
+ (generated on 20/06/2011 by HL7-Database 6.0) 
+--><xsd:schema elementFormDefault="qualified" targetNamespace="urn:hl7-org:v2xml" xmlns="urn:hl7-org:v2xml" xmlns:dfdl="http://www.ogf.org/dfdl/dfdl-1.0/" xmlns:hl7="urn:hl7-org:v2xml" xmlns:ibmDfdlExtn="http://www.ibm.com/dfdl/extensions" xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" xmlns:ibmhl7="http://www.ibm.com/dfdl/HL7Format" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <xsd:import namespace="http://www.ibm.com/dfdl/HL7Format" schemaLocation="IBMdefined/HL7Format.xsd"/>
+    <xsd:annotation>
+				<xsd:appinfo source="http://www.ogf.org/dfdl/">
+					<dfdl:format ref="ibmhl7:HL7Format"/>
+				</xsd:appinfo>
+			</xsd:annotation>
+    <xsd:include schemaLocation="segments.xsd"/>
+    <xsd:element ibmSchExtn:docRoot="true" name="HL7" type="HL7.CONTENT"/>
+    <xsd:complexType name="HL7.CONTENT">
+		    		<xsd:sequence>
+		    			<xsd:element ref="MSH"/>
+		    			<xsd:element maxOccurs="unbounded" minOccurs="0" ref="anyHL7Segment"/>
+		    		</xsd:sequence>
+		    	</xsd:complexType>
+</xsd:schema>

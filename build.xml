@@ -1,0 +1,173 @@
+<project name="BrokerDeploy" default="init">
+	<target name="base">
+		<echo>Action selected for build: coming from jenkins as parameter: ${action}</echo>
+		<echo>Action selected for environment: coming from jenkins as parameter: ${envToDeploy}</echo>
+		<echo>The userId : coming from jenkins as parameter: ${iib.userid}</echo>
+		<echo>The password :coming from jenkins as parameter: ${iib.userpassword}</echo>
+		<echo>The Jenkins current directory where code has been fetched from repository: coming from jenkins as parameter: ${curDir}</echo>
+		<echo>The Jenkins build number: coming from jenkins as parameter: ${jenkins_buldnumber}</echo>
+		<echo>The jenkins job name: coming from jenkins as parameter: ${jenkins_jobname}</echo>		
+		
+		<!-- antDir had been sent as parameter through Jenkins in DTE. But its not needed as it can be placed in the build server too at one location-->
+		<!--<taskdef resource="net/sf/antcontrib/antlib.xml">
+			<classpath>
+				<pathelement location="${antDir}/1.0b3/ant-contrib-1.0b3.jar"/>
+			</classpath>
+		</taskdef>-->
+		<!-- This jar is needed for switch statement, if statements and propertyregex expressions-->
+		<taskdef resource="net/sf/antcontrib/antlib.xml">
+			<classpath>
+				<pathelement location="C:\apache-ant-1.10.1-bin\apache-ant-1.10.1\ant-contrib-1.0b3.jar"/>
+			</classpath>
+		</taskdef>
+		<!-- <switch value="${action}">
+			<case value="Build">
+				<antcall target="build"/>
+			</case>
+			<case value="Override+Deploy">				
+				<antcall target="modifyBar"/>
+				<antcall target="deployBar"/>
+			</case>
+			<case value="Build+Override+Deploy">
+				<antcall target="build"/>
+				<antcall target="modifyBar"/>
+				<antcall target="deployBar"/>
+			</case>
+			<default>
+				<echo message="Invalid action is selected"/>
+			</default>
+		</switch> -->
+	</target>   
+	
+	<target name="init" depends="base">
+
+		<!-- Directory Initializations-->
+		<echo>Current Directory i.e. Jenkins directory coming as parameter: ${curDir}</echo>
+		
+		<!--<property name="workspaceDir" location="${curDir}/../Projects"/>-->
+		<!--setting this directory to absolute path as I am not fetching code from repository to Jenkins workspace. 
+		The jenkins workspace directory would be present in ${curDir} which we are sending from Jenkins as parameter
+		In normal scenarios, all further directories will be relative to  ${curDir}-->
+		<property name="workspaceDir" location="C:\Users\miracle\.jenkins\workspace\Christus"/>
+		<echo>Project Workspace Directory: ${workspaceDir}</echo>
+		
+		<property name="buildPropertiesDirectory" location="${workspaceDir}"/>
+		<echo>buildPropertiesDirectory Directory: ${buildPropertiesDirectory}</echo>
+		<echo>Project Workspace Directory: ${workspaceDir}</echo>
+		
+		<property name="barFileDir" location="${workspaceDir}/barfile"/>
+		<echo>Bar(package) File Directory: ${barFileDir}</echo>
+		
+		<property name="barOverideFileDir" location="${workspaceDir}/baroverride"/>
+		<echo>Bar override File Directory: ${barOverideFileDir}</echo>
+
+		<property file="${buildPropertiesDirectory}\build.properties"/>
+	</target>
+
+	<target name="build" depends="init">	
+
+		<property file="${buildPropertiesDirectory}\build.properties"/>
+		<echo message="Project to be Included List : ${project.name}"/>
+		<echo message="Message flows to be compiled List : ${messageflow.name}"/>
+		
+		<propertyregex property="projectIncluded" input="${project.name}" regexp="," replace=" " global="true"/>
+		<propertyregex property="messageFlowAndSetsIncluded" input="${messageflow.name}" regexp="," replace=" " global="true"/>
+		
+		<echo message="Project List String In Build Command : ${projectIncluded}"/>
+		<echo message="Message flows String In Build Command : ${messageFlowAndSetsIncluded}"/>
+		
+		<echo message="The mqsicreatebar command is to be executed as follows"/>
+		<echo message="${toolkit.home}\mqsicreatebar -data ${workspaceDir} -b ${barFileDir}\abc.bar -p ${projectIncluded} -o ${messageFlowAndSetsIncluded} -trace -v ${barFileDir}\abc.txt"/>
+		
+		<!-- Command for executing the mqsicreatebar. 
+		<arg line="1 2 3"/> is same as 
+		<arg value=1/>
+		<arg value=2/>
+		<arg value=3/>
+		-->
+		<!-- vmlauncher=false will show the error message occuring in mqsicreatebar command-->
+		<exec executable="${toolkit.home}\mqsicreatebar" spawn="false" vmlauncher="false" failonerror="true">
+			<arg value="-data" />
+			<arg value="${workspaceDir}" />
+			<arg value="-b" />
+			<arg value="${barFileDir}\abc.bar" />
+			<arg value="-p" />
+			<arg line="${projectIncluded}" />			
+			<arg value="-o" />
+			<arg line="${messageFlowAndSetsIncluded}" />
+			<arg value="-trace" />
+			<arg value="-v"/>
+			<arg value="${barFileDir}\abc.txt"/>
+		</exec>
+		
+		<echo message="The bar ${barFileDir}\abc.bar has been created successfully"/>
+	</target>
+
+	<!--Target to build the broker archive using mqsiapplybaroverride. It will use BAR file created in Build step and would run override on it-->
+<target name="modifyBar" depends="init">
+		<echo message="Applying override in Broker Archive file - ${jenkins_jobname}.bar using ${jenkins_jobname}.${envToDeploy}.properties"/>
+		<echo message="${mqsiDir}\mqsiapplybaroverride -b $abc.bar -o $abc.dev.bar"/>
+		
+		<!-- Execute the mqsibaroverride command but we need to set the environment first by running mqsiprofile command. We need to run mqsiprofile and mqsibarroveride in one single
+		instance of exec command but which is technically not possible. We can not run them in 2 separate instance as each instance of exec in Ant removes the previous call to profile.
+		The exec command exits its shell after run and mqsibaroverride gets erros saying that utilities not found
+		The best way is to create your own batch file and send commands as parameters so that both mqsiprofile and mqsiapplybaroverride can run under same command console-->
+		<!-- CALL %1 will execute mqsiprofile. %1 is the parameter to batch file which is mqsiprofile-->
+		<!-- CALL %2 to %8 will call mqsibaroverride along with its parameters till properties. %2 is mqsibaroverride and %8 is the properties entry-->
+		<exec executable="${buildPropertiesDirectory}\overridescript.bat" failonerror="true" vmlauncher="false">
+			<arg value="${mqsiDir}\mqsiprofile.cmd"/>
+			<arg value="${mqsiDir}\mqsiapplybaroverride"/>
+			<arg value="-b" />
+			<arg value="${barFileDir}\abc.bar" />
+			<arg value="-o" />
+			<arg value="${barFileDir}\abc.dev.bar" />
+			<arg value="-p" />
+			<arg line="${barFileDir}\abc.dev.properties" />
+		</exec>
+	</target>
+	
+	<target name="deployBar" depends="init">	
+		<echo message="Deploy Broker Archive file - ${projectName}.bar "/>
+		<echo message="${mqsiDir}/mqsideploy ${brokerName} -e ${execution_group} -a /home/esbadm/staging/${projectName}/${buildDate}/${projectName}.${env}.bar"/>
+		
+		<!--Run the deployment on the server by getting the ${projectName}.${env}.bar from /home/esbadm/staging/${projectName}/${buildDate} directory -->
+		<!-- For doing remote deployment, first we need to send that file to the broker runtime and then make the deployment. We need extra jar of jsch-0.1.42.jar as well to be placed in lib folder of ant-->
+<!--<scp file="C:\Users\pradeepjain\Downloads\bar\abc.bar" trust="true" todir="mqm:chef@2k17@192.168.1.213:/home/mqm/bar"/>-->
+<sshexec trust="true" host="192.168.1.213" username="mqm" password="chef@2k17" command="mqsideploy IIBNODE9_HL7 -e SERVER1 -a /home/mqm/bar/abc.dev.bar -w 600" failonerror="true"/>
+		
+		<!--
+		<if>
+			<equals arg1="${PostBuildScript}" arg2=""/>
+			<then>			
+			</then>
+		<else>
+			 <sshexec trust="true" host="${hostName}" username="${broker_uid}" password="${broker_pw}" command=". ${mqsiDir}/mqsiprofile ${PostBuildScript}" failonerror="true"/>
+        </else>
+      </if>-->	  
+      <!--<echo message="Post build script ran successfully"/>-->
+	  <!--<exec command="mqsideploy ${brokerName} -e ${execution_group} -a ${barFileDir}/${projectName}.${env}.bar -w 600"/>-->
+	  <echo message="Completed deployment of Broker Archive file - ${projectName}.${env}.bar"/>
+	</target>
+
+
+	<!--Target to deploy the broker archive using mqsideploy-->
+	<target name="deployBar1" depends="init">	
+		<echo message="Deploy Broker Archive file - ${jenkins_jobname}.${envToDeploy}.bar "/>
+			
+		<propertycopy property="brokerName" from="iibnode.${envToDeploy}"/>
+		<propertycopy property="execName" from="iibexecgrp.${envToDeploy}"/>	
+
+		<echo message="${mqsiDir}\mqsideploy ${brokerName} -e ${execName} -a ${barFileDir}\${jenkins_jobname}.${envToDeploy}.bar"/>		
+
+		<exec executable="${buildPropertiesDirectory}\deployscript.bat" vmlauncher="false" failonerror="true">
+			<arg value="${mqsiDir}\mqsiprofile.cmd"/>
+			<arg value="${mqsiDir}\mqsideploy"/>
+			<arg value="${brokerName}"/>
+			<arg value="-e"/>
+			<arg value="${execName}"/>
+			<arg value="-a"/>
+			<arg value="${barFileDir}\${jenkins_jobname}.${envToDeploy}.bar"/>
+		</exec>
+	  <echo message="Completed deployment of Broker Archive file - ${jenkins_jobname}.${envToDeploy}.bar"/>
+	</target>
+</project>

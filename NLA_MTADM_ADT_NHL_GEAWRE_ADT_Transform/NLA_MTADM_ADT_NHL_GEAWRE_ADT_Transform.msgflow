@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQInput.msgnode="ComIbmMQInput.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ErrorHandling_Subflows_TransformErrorHandling.msgflow="ErrorHandling/Subflows/TransformErrorHandling.msgflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:mbmonitor="http://www.ibm.com/wbi/2008/eflow_mbmonitor" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="NLA_MTADM_ADT_NHL_GEAWRE_ADT_Transform.msgflow"
+    nsPrefix="NLA_MTADM_ADT_NHL_GEAWRE_ADT_Transform.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <translation xmi:type="utility:TranslatableString" key="NLA_MTADM_ADT_NHL_GEAWRE_ADT_Transform" bundleName="NLA_MTADM_ADT_NHL_GEAWRE_ADT_Transform" pluginId="NLA_MTADM_ADT_NHL_GEAWRE_ADT_Transform"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/NLA_MTADM_ADT_NHL_GEAWRE_ADT_Transform/icons/full/obj16/NLA_MTADM_ADT_NHL_GEAWRE_ADT_Transform.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/NLA_MTADM_ADT_NHL_GEAWRE_ADT_Transform/icons/full/obj30/NLA_MTADM_ADT_NHL_GEAWRE_ADT_Transform.gif"/>
+    <composition>
+      <nodes xmi:type="ComIbmMQInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="11,168" queueName="NLA.MTADM.ADT.NHL.GEAWRE.ADT.XFRM.QL">
+        <translation xmi:type="utility:ConstantString" string="NLA.MTADM.ADT.NHL.GEAWRE.ADT.XFRM.QL"/>
+        <monitorEvents eventSourceDescription="Transaction start" eventSourceName="NLA.MTADM.ADT.NHL.GEAWRE.ADT.XFRM.QL.transaction.Start" eventIdentity="Transaction Start">
+          <eventXMLDoc xmi:type="mbmonitor:MonitorEvent">
+            <globalTransactionCorrelator/>
+            <parentTransactionCorrelator/>
+            <localTransactionCorrelator dataLocation="$Root/MQRFH2/usr/uniqueMessageId" eventCorrelation="dataLocation"/>
+            <bitStreamData encoding="base64Binary"/>
+            <eventName literal="Transaction Start"/>
+            <eventFilter dataLocation="true()" isXPath="true"/>
+          </eventXMLDoc>
+        </monitorEvents>
+        <monitorEvents eventSourceDescription="Transaction end" eventSourceName="NLA.MTADM.ADT.NHL.GEAWRE.ADT.XFRM.QL.transaction.End" eventIdentity="Transaction End">
+          <eventXMLDoc xmi:type="mbmonitor:MonitorEvent">
+            <globalTransactionCorrelator/>
+            <parentTransactionCorrelator/>
+            <localTransactionCorrelator dataLocation="$Root/MQRFH2/usr/uniqueMessageId" eventCorrelation="dataLocation"/>
+            <bitStreamData encoding="none" bitstreamContent="none"/>
+            <eventName literal="Transaction End"/>
+            <eventFilter dataLocation="true()" isXPath="true"/>
+          </eventXMLDoc>
+        </monitorEvents>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="643,177" queueName="NHL.GEAWRE.ADT.QL">
+        <translation xmi:type="utility:ConstantString" string="NHL.GEAWRE.ADT.QL"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="455,190" computeExpression="esql://routine/#NLA_MTADM_ADT_NHL_GEAWRE_ADT_Transform.Main">
+        <translation xmi:type="utility:ConstantString" string="Transform"/>
+      </nodes>
+      <nodes xmi:type="ErrorHandling_Subflows_TransformErrorHandling.msgflow:FCMComposite_1" xmi:id="FCMComposite_1_4" location="364,52">
+        <translation xmi:type="utility:ConstantString" string="TransformErrorHandling"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+    </composition>
+    <propertyOrganizer/>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

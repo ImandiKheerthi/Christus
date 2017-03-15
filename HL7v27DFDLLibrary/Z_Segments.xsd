@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="iso-8859-1"?><xsd:schema targetNamespace="urn:hl7-org:v2xml" xmlns="urn:hl7-org:v2xml" xmlns:dfdl="http://www.ogf.org/dfdl/dfdl-1.0/" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" xmlns:ibmhl7="http://www.ibm.com/dfdl/HL7Format" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	
+	<xsd:annotation>
+		<xsd:appinfo source="http://www.ogf.org/dfdl/">
+			<dfdl:format ref="ibmhl7:HL7Format"/>
+		</xsd:appinfo>
+	</xsd:annotation>
+
+    <xsd:import namespace="http://www.ibm.com/dfdl/HL7Format" schemaLocation="IBMdefined/HL7Format.xsd"/>
+    
+    <xsd:include schemaLocation="fields.xsd"/>
+     
+  <xsd:group name="Z_Group">
+    <xsd:choice>
+     <!-- Add user-defined segments in front of catch-all segment Zxx --> 
+      <xsd:element maxOccurs="1" minOccurs="1" ref="Zxx"/>
+    </xsd:choice>
+  </xsd:group>
+  
+    <xsd:complexType name="Zxx.CONTENT">
+        <xsd:sequence dfdl:ref="ibmhl7:HL7Segment" dfdl:separatorPosition="infix">
+        	<xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.0.NAME" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.1.FIELD1" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.2.FIELD2" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.3.FIELD3" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.4.FIELD4" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.5.FIELD5" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.6.FIELD6" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.7.FIELD7" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.8.FIELD8" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.9.FIELD9" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.10.FIELD10" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.11.FIELD11" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.12.FIELD12" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.13.FIELD13" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.14.FIELD14" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.15.FIELD15" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.16.FIELD16" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.17.FIELD17" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.18.FIELD18" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.19.FIELD19" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.20.FIELD20" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.21.FIELD21" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.22.FIELD22" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.23.FIELD23" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.24.FIELD24" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.25.FIELD25" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.26.FIELD26" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.27.FIELD27" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.28.FIELD28" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.29.FIELD29" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.30.FIELD30" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.31.FIELD31" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.32.FIELD32" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.33.FIELD33" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.34.FIELD34" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.35.FIELD35" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.36.FIELD36" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.37.FIELD37" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.38.FIELD38" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.39.FIELD39" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.40.FIELD40" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.41.FIELD41" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.42.FIELD42" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.43.FIELD43" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.44.FIELD44" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.45.FIELD45" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.46.FIELD46" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.47.FIELD47" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.48.FIELD48" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.49.FIELD49" type="xs:string"/>
+            <xsd:element dfdl:encoding="iso-8859-1" maxOccurs="1" minOccurs="0" name="Zxx.50.FIELD50" type="xs:string"/>
+            
+            
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:element dfdl:initiator="" dfdl:ref="ibmhl7:HL7SegmentTerminator" name="Zxx" type="Zxx.CONTENT"/>
+</xsd:schema>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="SUBJECT" type="xsd:string"/>
+  <xsd:element name="ORIGINAL_PAYLOAD" type="xsd:string"/>
+  <xsd:element name="CREATE_TIME" type="xsd:string"/>
+  <xsd:element name="TO" type="xsd:string"/>
+  <xsd:element name="SEND_EMAIL" type="xsd:string"/>
+  <xsd:element name="ERROR_NUMBER" type="xsd:string"/>
+  <xsd:element name="ERROR_MESSAGE" type="xsd:string"/>
+  <xsd:element name="MSG_ID" type="xsd:string"/>
+  <xsd:element name="UPDATE_TIME" type="xsd:string"/>
+  <xsd:element name="NODE_LABEL" type="xsd:string"/>
+  <xsd:element name="BCC" type="xsd:string"/>
+  <xsd:element name="MESSAGE" type="xsd:string"/>
+  <xsd:element name="QUEUE_NAME" type="xsd:string"/>
+  <xsd:element name="QMGR_NAME" type="xsd:string"/>
+  <xsd:element name="QUEUE_DISABLE" type="xsd:string"/>
+  <xsd:element name="IP_HOST" type="xsd:string"/>
+  <xsd:element name="IP_PORT" type="xsd:string"/>
+  <xsd:element name="BROKER_NAME" type="xsd:string"/>
+  <xsd:element name="EXECUTION_GROUP_NAME" type="xsd:string"/>
+  <xsd:element name="ERROR_STATUS" type="xsd:string"/>
+  <xsd:element name="APPLICATION_NAME" type="xsd:string"/>
+  <xsd:element name="CC" type="xsd:string"/>
+  <xsd:element name="FROM" type="xsd:string"/>
+   <xsd:element name="COMMON">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="ERROR"/>
+        <xsd:element ref="EMAIL"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element> 
+  <xsd:element name="ERROR">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="ERROR_TYPE"/>
+        <xsd:element ref="ERROR_STATUS"/>
+        <xsd:element ref="MSG_ID"/>
+        <xsd:element ref="ERROR_NUMBER"/>
+        <xsd:element ref="ERROR_MESSAGE"/>
+         <xsd:element ref="BROKER_NAME"/>
+        <xsd:element ref="EXECUTION_GROUP_NAME"/>
+        <xsd:element ref="ORIGINAL_PAYLOAD"/>
+        <xsd:element ref="APPLICATION_NAME"/>
+        <xsd:element ref="QUEUE_NAME"/>
+        <xsd:element ref="QMGR_NAME"/>       
+        <xsd:element ref="QUEUE_DISABLE"/>   
+        <xsd:element ref="IP_HOST"/>   
+        <xsd:element ref="IP_PORT"/>   
+        <xsd:element ref="FLOW_NAME"/>
+        <xsd:element ref="NODE_LABEL"/>
+        <xsd:element ref="CREATE_TIME"/>
+        <xsd:element ref="UPDATE_TIME"/>
+        <xsd:element ref="SEND_EMAIL"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="EMAIL">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="FROM"/>
+        <xsd:element ref="TO"/>
+        <xsd:element ref="CC"/>
+        <xsd:element ref="BCC"/>
+        <xsd:element ref="SUBJECT"/>
+        <xsd:element ref="MESSAGE"/>
+        <xsd:element ref="ATTACHMENT"/>
+        <xsd:element ref="REPLY-TO"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="FLOW_NAME" type="xsd:string"/>
+  <xsd:element name="ATTACHMENT" type="xsd:string"/>
+  <xsd:element name="REPLY-TO" type="xsd:string"/>
+  <xsd:element name="ERROR_TYPE" type="xsd:string"/>
+</xsd:schema>
